@@ -44,4 +44,22 @@ Parent: All children have exited.
 Выполнены все требования к оценке 4.
 
 ### На оценку 5
+Общая схема(каналы были созданы с помощью функции mknod): 
+![](diagram2.png)
 
+Пример запуска программы, где последний аргумент это имя канала:
+```shell
+$ gcc main.c -o main -lpthread
+$ ./main ../tests/input1.txt ../tests/output1.txt main.fifo
+reader started
+Reader exit
+process started
+Process exit
+writer started
+Writer exit
+
+Parent: All children have exited.
+```
+Код проходит все тесты. Синхронизирован с помощью семафоров.
+
+### На оценку 6

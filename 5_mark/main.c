@@ -9,16 +9,11 @@
 const int buf_size = 10000;
 sem_t *sem;
 
-void fileReader(int *fd, char* input_file_name) {
+void fileReader(int fd, char* input_file_name) {
     char str_buf[buf_size];
     size_t size_of_file;
 
     printf("reader started\n");
-
-    if (close(fd[0]) < 0) {
-        printf("parent: Can\'t close reading side of pipe\n");
-        return;
-    }
 
     int input_file = open(input_file_name, O_RDONLY);
     if (input_file <= 0) {
@@ -30,58 +25,41 @@ void fileReader(int *fd, char* input_file_name) {
 
     close(input_file);
 
-    int size = write(fd[1], str_buf, size_of_file);
+    int size = write(fd, str_buf, size_of_file);
 
     if (size != size_of_file) {
         printf("Can\'t write all string to pipe\n");
         return;
     }
-    if (close(fd[1]) < 0) {
-        printf("parent: Can\'t close writing side of pipe\n");
-        return;
-    }
-
     printf("Reader exit\n");
 }
 
-void dataProcess(int *fd) {
+void dataProcess(int fd) {
     printf("process started\n");
     char str_buf[buf_size];
 
-    int size = read(fd[0], str_buf, buf_size);
+    int size = read(fd, str_buf, buf_size);
     if (size < 0) {
         printf("Can\'t read string from pipe\n");
-        return;
-    }
-    if (close(fd[0]) < 0) {
-        printf("child: Can\'t close reading side of pipe\n");
         return;
     }
 
     int result = taskSolver(str_buf, size);
 
-    size = write(fd[1], &result, sizeof(int));
+    size = write(fd, &result, sizeof(int));
 
     if (size != sizeof(int)) {
         printf("Can\'t write all string to pipe\n");
         return;
     }
-    if (close(fd[1]) < 0) {
-        printf("parent: Can\'t close writing side of pipe\n");
-        return;
-    }
     printf("Process exit\n");
 }
 
-void fileWriter(int *fd, char* output_file_name) {
+void fileWriter(int fd, char* output_file_name) {
     printf("writer started\n");
     int result;
 
-    if (close(fd[1]) < 0) {
-        printf("child: Can\'t close writing side of pipe\n");
-        return;
-    }
-    int size = read(fd[0], &result, sizeof(int));
+    int size = read(fd, &result, sizeof(int));
     if (size < 0) {
         printf("Can\'t read string from pipe\n");
         return;
@@ -101,26 +79,24 @@ void fileWriter(int *fd, char* output_file_name) {
     write(output_file, str, size_);
     close(output_file);
 
-    if (close(fd[0]) < 0) {
-        printf("child: Can\'t close reading side of pipe\n");
-        return;
-    }
     printf("Writer exit\n");
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
+    if (argc < 4) {
         printf("Not enough arguments\n");
         return 0;
     }
 
-    int fd[2], i;
+    int fd, i;
     pid_t pid;
 
     unsigned int sem_value = 1;
 
-    if (pipe(fd) < 0) {
-        printf("Can\'t open pipe\n");
+    mknod(argv[3], S_IFIFO | 0666, 0);
+
+    if ((fd = open(argv[3], O_RDWR)) < 0) {
+        printf("Can\'t open fifo\n");
         exit(-1);
     }
 
@@ -146,6 +122,7 @@ int main(int argc, char *argv[]) {
 
         printf("\nParent: All children have exited.\n");
 
+        close(fd);
         sem_unlink("pSem");
         sem_close(sem);
         exit(0);
