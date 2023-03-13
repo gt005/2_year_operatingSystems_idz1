@@ -1,37 +1,41 @@
-// 02-parent-child.c
-#include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <semaphore.h>
 #include <fcntl.h>
 #include <errno.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include "../taskSolver.c"
 
-const int buf_size = 5000;
-const int mes_size = 5000;
+const int buf_size = 10000;
 sem_t *sem;
 
-void fileReader(int *fd) {
+void fileReader(int *fd, char* input_file_name) {
     char str_buf[buf_size];
+    size_t size_of_file;
+
     printf("reader started\n");
+
     if (close(fd[0]) < 0) {
         printf("parent: Can\'t close reading side of pipe\n");
         return;
     }
 
-    FILE *a = fopen("input.txt", "rt");
-    if (a <= 0) {
+    int input_file = open(input_file_name, O_RDONLY);
+    if (input_file <= 0) {
         printf("\nCan't open file to read\n");
-        fclose(a);
+        close(input_file);
         return;
     }
-    fscanf(a, "%s", str_buf);
-    fclose(a);
+    size_of_file = read(input_file, str_buf, buf_size);
 
-    int size = write(fd[1], str_buf, mes_size);
+    close(input_file);
 
-    if (size != mes_size) {
-        printf("Can\'t write all string to pipe %d %d\n", size, mes_size);
+    int size = write(fd[1], str_buf, size_of_file);
+
+    if (size != size_of_file) {
+        printf("Can\'t write all string to pipe\n");
         return;
     }
     if (close(fd[1]) < 0) {
@@ -39,39 +43,80 @@ void fileReader(int *fd) {
         return;
     }
 
-    printf("Parent exit\n");
+    printf("Reader exit\n");
 }
 
-void fileWriter(int *fd) {
+void dataProcess(int *fd) {
+    printf("process started\n");
     char str_buf[buf_size];
+
+    int size = read(fd[0], str_buf, buf_size);
+    if (size < 0) {
+        printf("Can\'t read string from pipe\n");
+        return;
+    }
+    if (close(fd[0]) < 0) {
+        printf("child: Can\'t close reading side of pipe\n");
+        return;
+    }
+
+    int result = taskSolver(str_buf, size);
+
+    size = write(fd[1], &result, sizeof(int));
+
+    if (size != sizeof(int)) {
+        printf("Can\'t write all string to pipe\n");
+        return;
+    }
+    if (close(fd[1]) < 0) {
+        printf("parent: Can\'t close writing side of pipe\n");
+        return;
+    }
+    printf("Process exit\n");
+}
+
+void fileWriter(int *fd, char* output_file_name) {
+    printf("writer started\n");
+    int result;
 
     if (close(fd[1]) < 0) {
         printf("child: Can\'t close writing side of pipe\n");
         return;
     }
-    int size = read(fd[0], str_buf, mes_size);
+    int size = read(fd[0], &result, sizeof(int));
     if (size < 0) {
         printf("Can\'t read string from pipe\n");
         return;
     }
 
-    FILE *a = fopen("output.txt", "wt");
-    if (a <= 0) {
-        printf("\nCan't open file to read\n");
-        fclose(a);
+    int output_file = open(output_file_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+    if (output_file <= 0) {
+        printf("\nCan't open file to write\n");
+        close(output_file);
         return;
     }
-    fprintf(a, "%s", str_buf);
-    fclose(a);
+
+    char str[10];
+    int size_ = sprintf(str, "%d", result);
+
+    write(output_file, str, size_);
+    close(output_file);
 
     if (close(fd[0]) < 0) {
         printf("child: Can\'t close reading side of pipe\n");
         return;
     }
+    printf("Writer exit\n");
 }
 
-int main() {
-    int fd[2], result, i;
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        printf("Not enough arguments\n");
+        return 0;
+    }
+
+    int fd[2], i;
     pid_t pid;
 
     unsigned int value = 1;
@@ -83,7 +128,7 @@ int main() {
 
     sem = sem_open("pSem", O_CREAT | O_EXCL, 0644, value);
 
-    for (i = 0; i < 2; ++i) {
+    for (i = 0; i < 3; ++i) {
         pid = fork();
 
         if (pid < 0) {
@@ -106,23 +151,22 @@ int main() {
         sem_unlink("pSem");
         sem_close(sem);
         exit(0);
-    } else {
+    } else {  // child
+        sem_wait(sem);
+
         switch (i) {
             case 0:
-                sem_wait(sem);
-
-                fileReader(fd);
-
-                sem_post(sem);
+                fileReader(fd, argv[1]);
                 break;
             case 1:
-                sem_wait(sem);
-
-                fileWriter(fd);
-
-                sem_post(sem);
+                dataProcess(fd);
+                break;
+            case 2:
+                fileWriter(fd, argv[2]);
                 break;
         }
+
+        sem_post(sem);
     }
 
 
