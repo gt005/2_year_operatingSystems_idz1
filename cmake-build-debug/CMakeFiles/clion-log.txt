@@ -1,4 +1,1 @@
-/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_DEPENDS_USE_COMPILER=FALSE -G "CodeBlocks - Unix Makefiles" /Users/karimhamid/Documents/docker_files/ubuntu_with_vim_and_gcc/volume/IDZ_1_OS
--- Configuring done
--- Generating done
--- Build files have been written to: /Users/karimhamid/Documents/docker_files/ubuntu_with_vim_and_gcc/volume/IDZ_1_OS/cmake-build-debug
+CMakeLists.txt not found in /Users/karimhamid/Documents/docker_files/ubuntu_with_vim_and_gcc/volume/IDZ_1_OS Select CMakeLists.txt

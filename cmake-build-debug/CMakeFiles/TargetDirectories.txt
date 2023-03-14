@@ -1,3 +1,0 @@
-/Users/karimhamid/Documents/docker_files/ubuntu_with_vim_and_gcc/volume/IDZ_1_OS/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/karimhamid/Documents/docker_files/ubuntu_with_vim_and_gcc/volume/IDZ_1_OS/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/karimhamid/Documents/docker_files/ubuntu_with_vim_and_gcc/volume/IDZ_1_OS/cmake-build-debug/CMakeFiles/IDZ_1_OS.dir
