@@ -1,3 +1,6 @@
+//
+// Created by Карим Хамид on 13.03.2023.
+//
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +10,7 @@
 #include "../taskSolver.c"
 
 const int buf_size = 10000;
-sem_t *sem_to_process_data, *sem_to_write;
+sem_t *sem_to_process_data;
 
 void fileHandler(int *fd, char* input_file_name, char* output_file_name) {
     sem_wait(sem_to_process_data);
@@ -126,7 +129,6 @@ int main(int argc, char *argv[]) {
     }
 
     sem_to_process_data = sem_open("pSem", O_CREAT | O_EXCL, 0644, 1);
-    sem_to_write = sem_open("pSem_write", O_CREAT | O_EXCL, 0644, 0);
 
     for (i = 0; i < 2; ++i) {
         pid = fork();

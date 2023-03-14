@@ -83,3 +83,23 @@ Writer exit
 
 Parent: All children have exited.
 ```
+
+### На оценку 7
+Общая схема(каналы были созданы с помощью функции mknod):
+![](diagram4.png)
+
+Для синхронизации также использовались семафоры.
+
+Запуск программы:
+```shell
+$ gcc main.c -o main -lpthread
+$ ./main ../tests/input1.txt ../tests/output1.txt main.fifo
+reader started
+Reader exit
+process started
+Process exit
+writer started
+Writer exit
+
+Parent: All children have exited.
+```

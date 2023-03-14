@@ -1,3 +1,6 @@
+//
+// Created by Карим Хамид on 13.03.2023.
+//
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
